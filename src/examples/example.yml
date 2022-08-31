@@ -1,0 +1,13 @@
+description: >
+  Publish schema changes to a subgraph in one of your federated.
+
+usage:
+  version: 2.1
+  orbs:
+    graphql-federation: nexbus/graphql-federation@1.2.3
+  workflows:
+    publish:
+      jobs:
+        - graphql-federation/publish:
+            supergraph: my-supergraph
+            directory: graphql/schema
