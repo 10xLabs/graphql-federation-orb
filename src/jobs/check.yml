@@ -1,0 +1,18 @@
+description: >
+  Publish schema changes to a subgraph in one of your federated.
+
+executor: default
+
+parameters:
+  supergraph:
+    type: string
+    description: "The name of the supergraph to publish to"
+  directory:
+    type: string
+    default: "graphql/schema"
+    description: "Directory containing graphql schema files"
+steps:
+  - checkout
+  - check:
+      directory: << parameters.directory >>
+      supergraph: << parameters.supergraph >>

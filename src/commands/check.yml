@@ -15,9 +15,6 @@ steps:
       name: Check directory changes
       command: <<include(scripts/check_directory_changes.sh)>>
   - run:
-      name: Install AWS CLI
-      command: <<include(scripts/install_aws_cli.sh)>>
-  - run:
       name: Install Rover CLI
       command: <<include(scripts/install_rover_cli.sh)>>
   - run:
@@ -26,14 +23,3 @@ steps:
         SUPERGRAPH: <<parameters.supergraph>>
       name: Check subgraph
       command: <<include(scripts/check_subgraph.sh)>>
-  - run:
-      environment:
-        DIRECTORY: <<parameters.directory>>
-        SUPERGRAPH: <<parameters.supergraph>>
-      name: Publish subgraph
-      command: <<include(scripts/publish_subgraph.sh)>>
-  - run:
-      environment:
-        SUPERGRAPH: <<parameters.supergraph>>
-      name: Fetch supergraph
-      command: <<include(scripts/fetch_supergraph.sh)>>

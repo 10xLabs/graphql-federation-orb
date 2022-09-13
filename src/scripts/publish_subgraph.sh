@@ -2,5 +2,6 @@
 find "$DIRECTORY" -name "*.graphql" -exec cat {} \; > schema.graphql
 
 rover subgraph publish "$SUPERGRAPH@$ENVIRONMENT" \
-    --name "$CIRCLE_PROJECT_REPONAME" --schema schema.graphql \
+    --schema schema.graphql \
+    --name "$CIRCLE_PROJECT_REPONAME" \
     --routing-url "https://$CIRCLE_PROJECT_REPONAME-api.$DOMAIN_NAME/graphql"
