@@ -1,5 +1,5 @@
 #!/bin/bash
-find "$DIRECTORY" -name "*.graphql" -exec cat {} \; > schema.graphql
+find "$DIRECTORY" -name "*.graphql" -exec cat {} \; >schema.graphql
 
 rover subgraph check "$SUPERGRAPH@$ENVIRONMENT" \
     --schema schema.graphql \

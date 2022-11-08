@@ -22,6 +22,11 @@ steps:
       command: <<include(scripts/install_rover_cli.sh)>>
   - run:
       environment:
+        SUPERGRAPH: <<parameters.supergraph>>
+      name: Set Apollo API key
+      command: <<include(scripts/set_apollo_key.sh)>>
+  - run:
+      environment:
         DIRECTORY: <<parameters.directory>>
         SUPERGRAPH: <<parameters.supergraph>>
       name: Check subgraph
