@@ -1,6 +1,9 @@
 description: >
   Publish schema changes to a subgraph in one of your federated.
 parameters:
+  base-branch:
+    type: string
+    description: "The name of the base branch to run the check"
   supergraph:
     type: string
     description: "The name of the supergraph to publish to"
@@ -9,6 +12,11 @@ parameters:
     default: "graphql/schema"
     description: "Directory containing graphql schema files"
 steps:
+  - run:
+      environment:
+        BASE_BRANCH: <<parameters.base-branch>>
+      name: Check the base branch
+      command: <<include(scripts/check_base_branch.sh)>>
   - run:
       environment:
         DIRECTORY: <<parameters.directory>>
