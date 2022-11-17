@@ -1,6 +1,4 @@
 #!/bin/bash
-find "$DIRECTORY" -name "*.graphql" -exec cat {} \; >schema.graphql
-
 rover subgraph publish "$SUPERGRAPH@$ENVIRONMENT" \
     --schema schema.graphql \
     --name "$CIRCLE_PROJECT_REPONAME" \
