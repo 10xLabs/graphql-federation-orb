@@ -1,5 +1,9 @@
 #!/bin/bash
-rover subgraph publish "$SUPERGRAPH@$ENVIRONMENT" \
+# shellcheck disable=SC2153
+subgraph="$CIRCLE_PROJECT_REPONAME-$SUBGRAPH"
+supergraph="$SUPERGRAPH@$ENVIRONMENT"
+
+rover subgraph publish "$supergraph" \
+    --name "$subgraph" \
     --schema schema.graphql \
-    --name "$CIRCLE_PROJECT_REPONAME" \
-    --routing-url "https://$CIRCLE_PROJECT_REPONAME-api.$DOMAIN_NAME/graphql"
+    --routing-url "https://$CIRCLE_PROJECT_REPONAME-$SUBGRAPH-api.$DOMAIN_NAME/graphql"
