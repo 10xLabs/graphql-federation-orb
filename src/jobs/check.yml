@@ -4,6 +4,9 @@ description: >
 executor: default
 
 parameters:
+  subgraph:
+    type: string
+    description: "The name of the subgraph to publish"
   base-branch:
     type: string
     description: "The name of the base branch to run the check"
@@ -17,6 +20,7 @@ parameters:
 steps:
   - checkout
   - check:
+      subgraph: <<parameters.subgraph>>
       base-branch: <<parameters.base-branch>>
       directory: << parameters.directory >>
       supergraph: << parameters.supergraph >>

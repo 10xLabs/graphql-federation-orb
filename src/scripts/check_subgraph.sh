@@ -1,15 +1,19 @@
 #!/bin/bash
+# shellcheck disable=SC2153
+subgraph="$CIRCLE_PROJECT_REPONAME-$SUBGRAPH"
+supergraph="$SUPERGRAPH@$ENVIRONMENT"
+
 find "$DIRECTORY" -name "*.graphql" -exec cat {} \; >schema.graphql
 
-subgraph="$(echo "$CIRCLE_PROJECT_REPONAME" | sed -r 's/(^|-)([a-z])/\U\2/g')"
+name="$(echo "$subgraph" | sed -r 's/(^|-)([a-z])/\U\2/g')"
 
 cat >>schema.graphql <<EOL
 
-input SHA${subgraph}Input {
+input SHA${name}Input {
     value: String = "${CIRCLE_SHA1}"
 }
 EOL
 
-rover subgraph check "$SUPERGRAPH@$ENVIRONMENT" \
-    --schema schema.graphql \
-    --name "$CIRCLE_PROJECT_REPONAME"
+rover subgraph check "$supergraph" \
+    --name "$subgraph" \
+    --schema schema.graphql
