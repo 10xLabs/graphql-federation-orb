@@ -4,7 +4,7 @@ parameters:
   subgraph:
     type: string
     description: "The name of the subgraph to publish"
-  base-branch:
+  base_branch:
     type: string
     description: "The name of the base branch to run the check"
     default: ""
@@ -18,7 +18,7 @@ parameters:
 steps:
   - run:
       environment:
-        BASE_BRANCH: <<parameters.base-branch>>
+        BASE_BRANCH: <<parameters.base_branch>>
       name: Check the base branch
       command: <<include(scripts/check_base_branch.sh)>>
   - run:
