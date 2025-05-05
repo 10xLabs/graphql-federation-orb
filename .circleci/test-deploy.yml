@@ -1,7 +1,7 @@
 version: 2.1
 orbs:
   graphql-federation: nexbus/graphql-federation@dev:<<pipeline.git.revision>>
-  orb-tools: circleci/orb-tools@11.3
+  orb-tools: circleci/orb-tools@12.3.1
 
 filters: &filters
   tags:
@@ -25,9 +25,9 @@ workflows:
       - orb-tools/pack:
           filters: *filters
       - orb-tools/publish:
-          orb-name: nexbus/graphql-federation
-          vcs-type: << pipeline.project.type >>
-          pub-type: production
+          orb_name: nexbus/graphql-federation
+          vcs_type: << pipeline.project.type >>
+          pub_type: production
           requires:
             - orb-tools/pack
             - command-tests
