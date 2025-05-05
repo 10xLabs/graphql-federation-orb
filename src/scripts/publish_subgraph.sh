@@ -2,7 +2,7 @@
 # shellcheck disable=SC2153
 subgraph="$CIRCLE_PROJECT_REPONAME-$SUBGRAPH"
 supergraph="$SUPERGRAPH@$ENVIRONMENT"
-routing_url="https://$SUPERGRAPH.$DOMAIN_NAME/$CIRCLE_PROJECT_REPONAME/graphql"
+routing_url="https://$SUPERGRAPH.$DOMAIN_NAME/subgraph/$CIRCLE_PROJECT_REPONAME/graphql"
 echo "Subgraph: $subgraph" 
 echo "Supergraph: $supergraph" 
 echo "Routing URL: $routing_url"
