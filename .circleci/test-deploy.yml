@@ -21,8 +21,10 @@ workflows:
     jobs:
       # Make sure to include "filters: *filters" in every test job you want to run as part of your deployment.
       - command-tests:
+          context: prod
           filters: *filters
       - orb-tools/pack:
+          context: prod
           filters: *filters
       - orb-tools/publish:
           orb_name: nexbus/graphql-federation

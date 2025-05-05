@@ -12,16 +12,12 @@ workflows:
   lint-pack:
     jobs:
       - orb-tools/lint:
-          context: orb-publishing
           filters: *filters
       - orb-tools/pack:
-          context: orb-publishing
           filters: *filters
       - orb-tools/review:
-          context: orb-publishing
           filters: *filters
       - shellcheck/check:
-          context: orb-publishing
           filters: *filters
       - orb-tools/publish:
           orb_name: nexbus/graphql-federation
