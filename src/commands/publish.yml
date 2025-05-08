@@ -10,6 +10,11 @@ parameters:
     description: "Directory containing graphql schema files"
 steps:
   - run:
+      environment:
+        DIRECTORY: <<parameters.directory>>
+      name: Check directory changes
+      command: <<include(scripts/check_directory_changes.sh)>>
+  - run:
       name: Install AWS CLI
       command: <<include(scripts/install_aws_cli.sh)>>
   - run:
