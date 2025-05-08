@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2153
 found=false
 supergraph="${SUPERGRAPH:0:27}@$ENVIRONMENT"
 for i in {1..8}; do
