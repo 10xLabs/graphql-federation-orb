@@ -14,6 +14,9 @@ input SHA${name}Input {
 }
 EOL
 
+echo "Subgraph: $subgraph"
+echo "Supergraph: $supergraph"
+
 rover subgraph check "$supergraph" \
     --name "$subgraph" \
     --schema schema.graphql
