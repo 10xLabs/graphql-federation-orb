@@ -1,7 +1,7 @@
 #!/bin/bash
 # shellcheck disable=SC2153
 subgraph="$CIRCLE_PROJECT_REPONAME"
-supergraph="$SUPERGRAPH@$ENVIRONMENT"
+supergraph="${SUPERGRAPH:0:27}@$ENVIRONMENT"
 
 find "$DIRECTORY" -name "*.graphql" -exec cat {} \; >schema.graphql
 
