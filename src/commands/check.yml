@@ -1,9 +1,6 @@
 description: >
   Publish schema changes to a subgraph in one of your federated.
 parameters:
-  subgraph:
-    type: string
-    description: "The name of the subgraph to publish"
   base_branch:
     type: string
     description: "The name of the base branch to run the check"
@@ -36,7 +33,6 @@ steps:
       command: <<include(scripts/set_apollo_key.sh)>>
   - run:
       environment:
-        SUBGRAPH: <<parameters.subgraph>>
         DIRECTORY: <<parameters.directory>>
         SUPERGRAPH: <<parameters.supergraph>>
       name: Check subgraph
