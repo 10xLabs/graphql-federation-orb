@@ -11,8 +11,13 @@ parameters:
     type: string
     default: "graphql/schema"
     description: "Directory containing graphql schema files"
+  skip_check_directory:
+    type: boolean
+    default: false
+    description: "Skip the Check directory changes step"
 steps:
   - checkout
   - publish:
       directory: << parameters.directory >>
       supergraph: << parameters.supergraph >>
+      skip_check_directory: << parameters.skip_check_directory >>
