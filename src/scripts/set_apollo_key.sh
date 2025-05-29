@@ -1,4 +1,6 @@
 #!/bin/bash
-APOLLO_KEY_NAME="$(echo "$SUPERGRAPH" | tr '-' '_' | tr '[:lower:]' '[:upper:]')_APOLLO_KEY"
+# shellcheck disable=SC2153
+supergraph="${SUPERGRAPH:0:27}"
+APOLLO_KEY_NAME="$(echo "$supergraph" | tr '-' '_' | tr '[:lower:]' '[:upper:]')_APOLLO_KEY"
 
 echo "export APOLLO_KEY=${!APOLLO_KEY_NAME}" >>"$BASH_ENV"

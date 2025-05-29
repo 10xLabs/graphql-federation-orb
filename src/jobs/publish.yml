@@ -4,9 +4,6 @@ description: >
 executor: default
 
 parameters:
-  subgraph:
-    type: string
-    description: "The name of the subgraph to publish"
   supergraph:
     type: string
     description: "The name of the supergraph to publish to"
@@ -14,9 +11,13 @@ parameters:
     type: string
     default: "graphql/schema"
     description: "Directory containing graphql schema files"
+  skip_check_directory:
+    type: boolean
+    default: false
+    description: "Skip the Check directory changes step"
 steps:
   - checkout
   - publish:
-      subgraph: <<parameters.subgraph>>
       directory: << parameters.directory >>
       supergraph: << parameters.supergraph >>
+      skip_check_directory: << parameters.skip_check_directory >>
