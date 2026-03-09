@@ -11,6 +11,10 @@ parameters:
   supergraph:
     type: string
     description: "The name of the supergraph to publish to"
+  subgraph:
+    type: string
+    default: ""
+    description: "The name of the subgraph (defaults to $CIRCLE_PROJECT_REPONAME)"
   directory:
     type: string
     default: "graphql/schema"
@@ -21,3 +25,4 @@ steps:
       base_branch: <<parameters.base_branch>>
       directory: <<parameters.directory>>
       supergraph: <<parameters.supergraph>>
+      subgraph: <<parameters.subgraph>>

@@ -1,6 +1,6 @@
 #!/bin/bash
 # shellcheck disable=SC2153
-subgraph="$CIRCLE_PROJECT_REPONAME"
+subgraph="${SUBGRAPH:-$CIRCLE_PROJECT_REPONAME}"
 supergraph="${SUPERGRAPH:0:27}@$ENVIRONMENT"
 routing_url="https://${SUPERGRAPH//router/gateway}.$DOMAIN_NAME/subgraph/$subgraph/graphql" # Corrected substitution
 echo "Subgraph: $subgraph" 
