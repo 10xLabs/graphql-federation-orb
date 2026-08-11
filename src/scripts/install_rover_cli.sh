@@ -1,4 +1,5 @@
 #!/bin/bash
-curl -sSL https://rover.apollo.dev/nix/latest | sh
+set -eo pipefail
+curl -sSL --fail --retry 3 https://rover.apollo.dev/nix/latest | sh
 
-sudo ln -s ~/.rover/bin/rover /usr/local/bin/rover
+sudo ln -sf ~/.rover/bin/rover /usr/local/bin/rover

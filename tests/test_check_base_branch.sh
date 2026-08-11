@@ -1,0 +1,62 @@
+#!/bin/bash
+# shellcheck source=tests/helpers.bash
+set -uo pipefail
+source "$(dirname "$0")/helpers.bash"
+
+# --- no PR, or no configured base branch, means nothing to check ------------
+
+new_sandbox
+export BASE_BRANCH="master"
+run_script check_base_branch.sh
+assert_eq 0 "$STATUS" "no PR: exits 0"
+assert_not_halted "no PR: does not halt"
+cleanup_sandbox
+
+new_sandbox
+github_pr_response "master"
+export BASE_BRANCH=""
+run_script check_base_branch.sh
+assert_eq 0 "$STATUS" "no base_branch parameter: exits 0"
+assert_not_halted "no base_branch parameter: does not halt"
+cleanup_sandbox
+
+# --- base branch match / mismatch ------------------------------------------
+
+new_sandbox
+github_pr_response "master"
+export BASE_BRANCH="master"
+run_script check_base_branch.sh
+assert_eq 0 "$STATUS" "base branch matches: exits 0"
+assert_not_halted "base branch matches: does not halt"
+cleanup_sandbox
+
+new_sandbox
+github_pr_response "develop"
+export BASE_BRANCH="master"
+run_script check_base_branch.sh
+assert_eq 0 "$STATUS" "base branch differs: exits 0"
+assert_halted "base branch differs: halts"
+cleanup_sandbox
+
+# --- failures must be loud, never a silent halt -----------------------------
+
+new_sandbox
+github_pr_response "master"
+export BASE_BRANCH="master"
+echo 22 >"$STUB_STATE/curl_exit"
+run_script check_base_branch.sh
+assert_eq 1 "$STATUS" "GitHub API call fails: exits non-zero"
+assert_not_halted "GitHub API call fails: does not halt"
+assert_contains "$STDERR" "GitHub" "GitHub API call fails: explains why"
+cleanup_sandbox
+
+new_sandbox
+github_pr_response "master"
+export BASE_BRANCH="master"
+echo '{"message":"Not Found"}' >"$STUB_STATE/curl_body"
+run_script check_base_branch.sh
+assert_eq 1 "$STATUS" "base ref missing from response: exits non-zero"
+assert_not_halted "base ref missing from response: does not halt"
+cleanup_sandbox
+
+finish

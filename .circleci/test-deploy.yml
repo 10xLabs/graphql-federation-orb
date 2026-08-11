@@ -8,23 +8,53 @@ filters: &filters
     only: /.*/
 
 jobs:
-  # Create a job to test the commands of your orbs.
-  # You may want to add additional validation steps to ensure the commands are working as expected.
-  command-tests:
+  # The two install steps are the only ones that touch the network at runtime.
+  # Run them against the real endpoints so a broken installer is caught here
+  # rather than in a consumer's pipeline.
+  install-tests:
     docker:
       - image: cimg/base:current
     steps:
       - checkout
+      - run:
+          name: Install AWS CLI
+          command: bash src/scripts/install_aws_cli.sh
+      - run:
+          name: AWS CLI is on PATH
+          command: aws --version
+      - run:
+          name: Install Rover CLI
+          command: bash src/scripts/install_rover_cli.sh
+      - run:
+          name: Rover CLI is on PATH
+          command: rover --version
+
+  # Resolves the freshly published dev orb and runs the check command end to
+  # end. `directory` points at a path that does not exist and never will, so
+  # the change check always halts the job before any Apollo or AWS call — what
+  # is under test is that the orb imports, the executor builds, the parameters
+  # interpolate and the halt path works.
+  command-smoke:
+    executor: graphql-federation/default
+    environment:
+      # Force the non-PR branch of check_directory_changes.sh so the smoke test
+      # needs no GITHUB_PAT.
+      CIRCLE_PULL_REQUEST: ""
+    steps:
+      - checkout
+      - graphql-federation/check:
+          supergraph: smoke-test-supergraph
+          directory: tests/fixtures/never-created
 
 workflows:
   test-deploy:
     jobs:
       # Make sure to include "filters: *filters" in every test job you want to run as part of your deployment.
-      - command-tests:
-          context: prod
+      - install-tests:
+          filters: *filters
+      - command-smoke:
           filters: *filters
       - orb-tools/pack:
-          context: prod
           filters: *filters
       - orb-tools/publish:
           orb_name: nexbus/graphql-federation
@@ -32,7 +62,8 @@ workflows:
           pub_type: production
           requires:
             - orb-tools/pack
-            - command-tests
+            - install-tests
+            - command-smoke
           context: orb-publishing
           filters:
             branches:
