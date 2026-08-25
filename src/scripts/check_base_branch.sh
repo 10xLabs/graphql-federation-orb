@@ -38,7 +38,8 @@ fi
 if [ "$base_branch" != "$BASE_BRANCH" ]; then
     reason="PR targets ${base_branch}, not ${BASE_BRANCH}"
     echo "${reason}. Skipping the rest of this command."
-    # Quoted, because CircleCI sources BASH_ENV and the reason contains spaces.
-    printf "export FEDERATION_SKIP='%s'\n" "$reason" >>"$BASH_ENV"
+    # %q, because CircleCI sources BASH_ENV: the reason contains spaces, and a
+    # branch name may legally contain a quote (`release/o'hare`).
+    printf 'export FEDERATION_SKIP=%q\n' "$reason" >>"$BASH_ENV"
     exit 0
 fi

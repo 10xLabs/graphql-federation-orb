@@ -62,7 +62,11 @@ that published and then failed before the upload heals on a re-run instead of
 leaving the gateway stale.
 
 Skipping is scoped to the orb's own steps. Neither command halts the job, so
-steps you put around them in your own job always run.
+steps you put around them in your own job always run, and running the commands
+more than once in a single job works — each invocation resets its own state.
+
+Set `GRAPHQL_FEDERATION_DISABLED` in a job's environment to make every step of
+the command a no-op without editing the workflow.
 
 ## Development
 

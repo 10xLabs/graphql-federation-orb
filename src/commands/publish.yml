@@ -18,6 +18,9 @@ parameters:
     description: "Directory containing graphql schema files"
 steps:
   - run:
+      name: Reset federation state
+      command: <<include(scripts/reset_state.sh)>>
+  - run:
       name: Install Rover CLI
       command: <<include(scripts/install_rover_cli.sh)>>
   - run:

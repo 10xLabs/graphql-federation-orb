@@ -66,6 +66,12 @@ All notable changes to this orb are documented here. The format follows
 
 ### Changed
 
+- Both commands start with a "Reset federation state" step. `$BASH_ENV` lives
+  for the whole job, so a job running check/publish twice used to have the second
+  invocation inherit the first one's skip flags and no-op, silently leaving the
+  second subgraph unpublished.
+- `GRAPHQL_FEDERATION_DISABLED` — set it in a job's environment to no-op every
+  step of the command. Read by the orb, never written by it.
 - **BREAKING for direct command users** — neither command calls
   `circleci-agent step halt` any more. Skipping is carried between the orb's own
   steps through `$BASH_ENV` (`FEDERATION_SKIP`, `SCHEMA_UNCHANGED`), so a

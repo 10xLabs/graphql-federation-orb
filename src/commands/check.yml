@@ -21,6 +21,9 @@ parameters:
     description: "Directory containing graphql schema files"
 steps:
   - run:
+      name: Reset federation state
+      command: <<include(scripts/reset_state.sh)>>
+  - run:
       environment:
         BASE_BRANCH: <<parameters.base_branch>>
       name: Check the base branch

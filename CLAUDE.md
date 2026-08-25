@@ -65,8 +65,12 @@ The `check` job is steps 1–5, plus an upfront guard for the PR base branch.
 
 No script calls `circleci-agent step halt`. Both skip paths write a variable to `$BASH_ENV` and every later step in the command reads it and no-ops:
 
-- `FEDERATION_SKIP=<reason>` — set by `check_base_branch.sh` when the PR does not target `base_branch`. Everything after it, installs included, is a no-op. `check_base_branch.sh` honours it too, so a job that sets it externally no-ops the whole command — that is what makes `orb-command-smoke` hermetic.
+- `FEDERATION_SKIP=<reason>` — set by `check_base_branch.sh` when the PR does not target `base_branch`. Everything after it, installs included, is a no-op.
 - `SCHEMA_UNCHANGED=true` — set by `compare_published_schema.sh`. Skips **only** steps 5 and 6.
+
+`$BASH_ENV` lives for the whole job, not for one command, so both flags outlive the command that wrote them. **Step 0 of both commands is `reset_state.sh`**, which clears them. Without it a job running check/publish twice — two subgraphs, or a check followed by a publish — has the second invocation inherit the first one's flags and no-op, silently leaving the second subgraph unpublished. That is the same class of silent skip this whole design exists to remove, so do not drop the reset step, and do not add a flag that `reset_state.sh` does not clear.
+
+`GRAPHQL_FEDERATION_DISABLED` is the one skip the orb reads but never writes: a job-level opt-out that `reset_state.sh` translates into `FEDERATION_SKIP`. It is what makes `orb-command-smoke` hermetic.
 
 Two reasons, both load-bearing. A halt terminates the whole job, and the commands are documented as usable inside a consumer's own job, so a skip would silently drop their tests and artifacts. And step 8 must still run on the unchanged path: the hash is compared against *Apollo*, never against S3, so a run that published its subgraph and then died before the upload would otherwise match the hash on every later run, go green, and leave the gateway on the pre-publish supergraph forever. On that path `fetch_supergraph.sh` skips the `CIRCLE_SHA1` wait — nothing new is being composed — and uploads what Apollo currently serves.
 
@@ -108,5 +112,7 @@ Known gap: a change that alters only the routing URL (i.e. `DOMAIN_NAME`) does n
 ### Env vars supplied by the consuming project's CircleCI context
 
 `ENVIRONMENT`, `DOMAIN_NAME`, `DEVOPS_CONFIG_BUCKET`, `<SUPERGRAPH>_APOLLO_KEY`, plus AWS credentials for the S3 upload. `GITHUB_PAT` is needed only by the `check` job, for the `base_branch` guard — `publish` stopped using it in 3.0.0. These are *not* orb parameters — adding a new one is a breaking change for consumers.
+
+`GRAPHQL_FEDERATION_DISABLED` is an optional job-level opt-out, read but never written by the orb.
 
 `SCHEMA_HASH`, `SCHEMA_UNCHANGED` and `FEDERATION_SKIP` are not context variables: the scripts write them to `$BASH_ENV` for later steps in the same job. `APOLLO_KEY` is written there too, with `printf %q` — CircleCI sources that file, so an unquoted key containing a space, `$`, backtick or `#` would be truncated or would run a substitution.

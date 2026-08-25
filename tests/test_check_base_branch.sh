@@ -50,6 +50,30 @@ run_script check_base_branch.sh
 assert_eq "" "$(bash_env_value FEDERATION_SKIP)" "base branch matches: exports no skip flag"
 cleanup_sandbox
 
+# --- state does not leak between commands in one job -------------------------
+
+new_sandbox
+github_pr_response "develop"
+export BASE_BRANCH="master"
+run_script check_base_branch.sh
+assert_contains "$(bash_env_value FEDERATION_SKIP)" "PR targets develop" "first command: sets the skip"
+
+run_script reset_state.sh
+github_pr_response "master"
+run_script check_base_branch.sh
+assert_eq "" "$(bash_env_value FEDERATION_SKIP)" \
+    "second command whose base branch matches: does not inherit the first command's skip"
+cleanup_sandbox
+
+# A branch name may legally contain a single quote, and the reason is sourced.
+new_sandbox
+github_pr_response "release/o'hare"
+export BASE_BRANCH="master"
+run_script check_base_branch.sh
+assert_eq "PR targets release/o'hare, not master" "$(bash_env_value FEDERATION_SKIP)" \
+    "quote in the base branch name: survives BASH_ENV being sourced"
+cleanup_sandbox
+
 # --- skipped from outside the orb -------------------------------------------
 
 new_sandbox

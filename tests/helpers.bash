@@ -95,7 +95,7 @@ new_sandbox() {
     # Environment the scripts read. Unset first so leakage cannot mask a bug.
     unset BASE_BRANCH DIRECTORY SUPERGRAPH SUBGRAPH ENVIRONMENT DOMAIN_NAME
     unset DEVOPS_CONFIG_BUCKET GITHUB_PAT CIRCLE_PULL_REQUEST SCHEMA_HASH
-    unset FEDERATION_SKIP SCHEMA_UNCHANGED APOLLO_KEY
+    unset FEDERATION_SKIP SCHEMA_UNCHANGED APOLLO_KEY GRAPHQL_FEDERATION_DISABLED
     # Apollo key variables are named after the supergraph under test, so clear
     # whatever a previous sandbox exported rather than an explicit list: a
     # leaked key would make the "missing context variable" assertions pass

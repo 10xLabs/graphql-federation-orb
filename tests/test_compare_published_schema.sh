@@ -99,6 +99,31 @@ assert_contains "$(cat "$STUB_STATE/rover_args")" "--name places-projector" \
     "empty subgraph parameter: falls back to CIRCLE_PROJECT_REPONAME"
 cleanup_sandbox
 
+# --- state does not leak between commands in one job -------------------------
+
+# $BASH_ENV lives for the whole job. Without the reset step, a job publishing two
+# subgraphs would have the second one inherit SCHEMA_UNCHANGED=true from the
+# first and skip its own publish — the second subgraph silently never ships.
+new_sandbox
+export SUPERGRAPH="nexbus-router"
+export ENVIRONMENT="stag"
+
+export SUBGRAPH="subgraph-a"
+export SCHEMA_HASH="$HASH"
+published_subgraph "$HASH"
+run_script compare_published_schema.sh
+assert_eq true "$(bash_env_value SCHEMA_UNCHANGED)" "first command: marks its own schema unchanged"
+
+run_script reset_state.sh
+export SUBGRAPH="subgraph-b"
+export SCHEMA_HASH="$OTHER_HASH"
+published_subgraph "$HASH"
+run_script compare_published_schema.sh
+assert_contains "$STDOUT" "differs" "second command: sees its own schema as changed"
+assert_eq "" "$(bash_env_value SCHEMA_UNCHANGED)" \
+    "second command: does not inherit the first command's SCHEMA_UNCHANGED"
+cleanup_sandbox
+
 # --- skipped by an earlier step ---------------------------------------------
 
 new_sandbox

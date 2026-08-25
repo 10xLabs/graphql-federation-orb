@@ -69,9 +69,9 @@ jobs:
               esac
             }
             assert_sequence "check steps" \
-              "Check the base branch|Install Rover CLI|Set Apollo API key|Build subgraph schema|Compare published subgraph|Check subgraph|"
+              "Reset federation state|Check the base branch|Install Rover CLI|Set Apollo API key|Build subgraph schema|Compare published subgraph|Check subgraph|"
             assert_sequence "publish steps" \
-              "Install Rover CLI|Set Apollo API key|Build subgraph schema|Compare published subgraph|Check subgraph|Publish subgraph|Install AWS CLI|Fetch supergraph|"
+              "Reset federation state|Install Rover CLI|Set Apollo API key|Build subgraph schema|Compare published subgraph|Check subgraph|Publish subgraph|Install AWS CLI|Fetch supergraph|"
       - run:
           # Asserting the exit code alone would also pass when the CLI has no
           # token, the dev orb does not resolve, or the install half-failed — so
@@ -94,14 +94,15 @@ jobs:
   # install-tests and tests/run.sh both exercise src/scripts from the checkout.
   # This is the only job that runs the *packed* orb — the inlined copies of the
   # same scripts — so a defect in <<include(scripts/x.sh)>> that still packs
-  # cleanly cannot reach consumers behind a green pipeline. FEDERATION_SKIP
+  # cleanly cannot reach consumers behind a green pipeline.
+  # GRAPHQL_FEDERATION_DISABLED
   # no-ops every step, which keeps the job hermetic: no Apollo key, no AWS
   # credentials, no network.
   orb-command-smoke:
     docker:
       - image: cimg/base:current
     environment:
-      FEDERATION_SKIP: orb-command-smoke
+      GRAPHQL_FEDERATION_DISABLED: "1"
     steps:
       - graphql-federation/check:
           base_branch: master
