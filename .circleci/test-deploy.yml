@@ -29,22 +29,92 @@ jobs:
           name: Rover CLI is on PATH
           command: rover --version
 
-  # Resolves the freshly published dev orb and runs the check command end to
-  # end. `directory` points at a path that does not exist and never will, so
-  # the change check always halts the job before any Apollo or AWS call — what
-  # is under test is that the orb imports, the executor builds, the parameters
-  # interpolate and the halt path works.
-  command-smoke:
-    executor: graphql-federation/default
-    environment:
-      # Force the non-PR branch of check_directory_changes.sh so the smoke test
-      # needs no GITHUB_PAT.
-      CIRCLE_PULL_REQUEST: ""
+  # Resolves the freshly published dev orb and compiles a stand-in consumer
+  # config against it. Executing check/publish for real would need an Apollo key
+  # and a throwaway supergraph; this stays hermetic while still catching the
+  # parameter and step wiring that consumers actually depend on.
+  orb-render-check:
+    docker:
+      - image: cimg/base:current
     steps:
       - checkout
+      - run:
+          name: Install CircleCI CLI
+          command: curl -fLSs https://raw.githubusercontent.com/CircleCI-Public/circleci-cli/main/install.sh | sudo bash
+      - run:
+          name: A consumer config compiles against the dev orb
+          command: |
+            sed 's|ORB_VERSION|dev:<< pipeline.git.revision >>|' \
+              tests/fixtures/consumer-config.yml >/tmp/consumer.yml
+            circleci config process /tmp/consumer.yml >/tmp/processed.yml
+            cat /tmp/processed.yml
+      - run:
+          # Order, not just presence. Greping each name independently would pass
+          # on a config whose steps had been reversed, and step order is exactly
+          # what changed in 3.0.0 — the change check has to run before the
+          # publish, and the AWS CLI install after it.
+          name: The processed config runs the check and publish steps in order
+          command: |
+            actual="$(grep -oE '^[[:space:]]*name: .+' /tmp/processed.yml \
+              | sed 's/^[[:space:]]*name: //; s/^"\(.*\)"$/\1/' \
+              | tr '\n' '|')"
+            echo "step order: $actual"
+            assert_sequence() {
+              case "$actual" in
+              *"$2"*) echo "ok: $1" ;;
+              *)
+                echo "$1 not found in order" >&2
+                exit 1
+                ;;
+              esac
+            }
+            assert_sequence "check steps" \
+              "Check the base branch|Install Rover CLI|Set Apollo API key|Build subgraph schema|Compare published subgraph|Check subgraph|"
+            assert_sequence "publish steps" \
+              "Install Rover CLI|Set Apollo API key|Build subgraph schema|Compare published subgraph|Check subgraph|Publish subgraph|Install AWS CLI|Fetch supergraph|"
+      - run:
+          # Asserting the exit code alone would also pass when the CLI has no
+          # token, the dev orb does not resolve, or the install half-failed — so
+          # the error text has to name the parameter.
+          name: A config passing the removed skip_check_directory is rejected
+          command: |
+            sed 's|ORB_VERSION|dev:<< pipeline.git.revision >>|' \
+              tests/fixtures/consumer-config-legacy.yml >/tmp/legacy.yml
+            if circleci config process /tmp/legacy.yml >/tmp/legacy-output.txt 2>&1; then
+              echo "skip_check_directory still compiles; it was supposed to be removed in 3.0.0" >&2
+              exit 1
+            fi
+            cat /tmp/legacy-output.txt
+            grep -qF "skip_check_directory" /tmp/legacy-output.txt || {
+              echo "config processing failed, but not because of skip_check_directory" >&2
+              exit 1
+            }
+            echo "rejected as expected"
+
+  # install-tests and tests/run.sh both exercise src/scripts from the checkout.
+  # This is the only job that runs the *packed* orb — the inlined copies of the
+  # same scripts — so a defect in <<include(scripts/x.sh)>> that still packs
+  # cleanly cannot reach consumers behind a green pipeline. FEDERATION_SKIP
+  # no-ops every step, which keeps the job hermetic: no Apollo key, no AWS
+  # credentials, no network.
+  orb-command-smoke:
+    docker:
+      - image: cimg/base:current
+    environment:
+      FEDERATION_SKIP: orb-command-smoke
+    steps:
       - graphql-federation/check:
-          supergraph: smoke-test-supergraph
-          directory: tests/fixtures/never-created
+          base_branch: master
+          supergraph: nexbus-router
+          subgraph: places-projector
+          directory: graphql/schema
+      - graphql-federation/publish:
+          supergraph: nexbus-router
+          subgraph: places-projector
+          directory: graphql/schema
+      - run:
+          name: The orb command left the job intact
+          command: echo "steps after the orb command still run"
 
 workflows:
   test-deploy:
@@ -52,7 +122,10 @@ workflows:
       # Make sure to include "filters: *filters" in every test job you want to run as part of your deployment.
       - install-tests:
           filters: *filters
-      - command-smoke:
+      - orb-render-check:
+          context: orb-publishing
+          filters: *filters
+      - orb-command-smoke:
           filters: *filters
       - orb-tools/pack:
           filters: *filters
@@ -63,7 +136,8 @@ workflows:
           requires:
             - orb-tools/pack
             - install-tests
-            - command-smoke
+            - orb-render-check
+            - orb-command-smoke
           context: orb-publishing
           filters:
             branches:

@@ -47,6 +47,32 @@ assert_contains "$rover_args" "--routing-url https://nexbus-gateway-abcdefghijkl
     "routing URL keeps the untruncated supergraph"
 cleanup_sandbox
 
+# --- skipped by an earlier step ---------------------------------------------
+
+new_sandbox
+echo "type Query { ping: String }" >schema.graphql
+export FEDERATION_SKIP="PR targets develop, not master"
+export SUPERGRAPH="nexbus-router"
+export ENVIRONMENT="stag"
+export DOMAIN_NAME="stag.kolors.com.mx"
+run_script publish_subgraph.sh
+assert_eq 0 "$STATUS" "FEDERATION_SKIP set: exits 0"
+assert_eq "" "$(cat "$STUB_STATE/rover_args" 2>/dev/null)" "FEDERATION_SKIP set: never calls rover"
+cleanup_sandbox
+
+# The schema is already published, so there is nothing to publish. Reaching rover
+# here would re-publish an identical schema on every build.
+new_sandbox
+echo "type Query { ping: String }" >schema.graphql
+export SCHEMA_UNCHANGED=true
+export SUPERGRAPH="nexbus-router"
+export ENVIRONMENT="stag"
+export DOMAIN_NAME="stag.kolors.com.mx"
+run_script publish_subgraph.sh
+assert_eq 0 "$STATUS" "SCHEMA_UNCHANGED set: exits 0"
+assert_eq "" "$(cat "$STUB_STATE/rover_args" 2>/dev/null)" "SCHEMA_UNCHANGED set: never calls rover"
+cleanup_sandbox
+
 # --- failure modes ----------------------------------------------------------
 
 new_sandbox

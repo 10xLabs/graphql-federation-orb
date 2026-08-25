@@ -30,12 +30,24 @@ assert_eq 0 "$STATUS" "base branch matches: exits 0"
 assert_not_halted "base branch matches: does not halt"
 cleanup_sandbox
 
+# A mismatch skips the rest of the command through BASH_ENV rather than halting
+# the job, so a consumer running this command inside their own job keeps their
+# own steps.
 new_sandbox
 github_pr_response "develop"
 export BASE_BRANCH="master"
 run_script check_base_branch.sh
 assert_eq 0 "$STATUS" "base branch differs: exits 0"
-assert_halted "base branch differs: halts"
+assert_not_halted "base branch differs: does not halt the job"
+assert_eq "PR targets develop, not master" "$(bash_env_value FEDERATION_SKIP)" \
+    "base branch differs: exports a quoted FEDERATION_SKIP reason"
+cleanup_sandbox
+
+new_sandbox
+github_pr_response "master"
+export BASE_BRANCH="master"
+run_script check_base_branch.sh
+assert_eq "" "$(bash_env_value FEDERATION_SKIP)" "base branch matches: exports no skip flag"
 cleanup_sandbox
 
 # --- failures must be loud, never a silent halt -----------------------------

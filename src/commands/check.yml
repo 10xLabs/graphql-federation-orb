@@ -1,5 +1,8 @@
 description: >
-  Publish schema changes to a subgraph in one of your federated.
+  Check schema changes to a subgraph against one of your federated supergraphs.
+  Skips the check when the supergraph already serves this schema, or when the PR
+  does not target base_branch. Skipping is scoped to this command: it never halts
+  the job, so your own steps around it still run.
 parameters:
   base_branch:
     type: string
@@ -7,7 +10,7 @@ parameters:
     default: ""
   supergraph:
     type: string
-    description: "The name of the supergraph to publish to"
+    description: "The name of the supergraph to check against"
   subgraph:
     type: string
     default: ""
@@ -23,11 +26,6 @@ steps:
       name: Check the base branch
       command: <<include(scripts/check_base_branch.sh)>>
   - run:
-      environment:
-        DIRECTORY: <<parameters.directory>>
-      name: Check directory changes
-      command: <<include(scripts/check_directory_changes.sh)>>
-  - run:
       name: Install Rover CLI
       command: <<include(scripts/install_rover_cli.sh)>>
   - run:
@@ -38,6 +36,16 @@ steps:
   - run:
       environment:
         DIRECTORY: <<parameters.directory>>
+      name: Build subgraph schema
+      command: <<include(scripts/build_schema.sh)>>
+  - run:
+      environment:
+        SUPERGRAPH: <<parameters.supergraph>>
+        SUBGRAPH: <<parameters.subgraph>>
+      name: Compare published subgraph
+      command: <<include(scripts/compare_published_schema.sh)>>
+  - run:
+      environment:
         SUPERGRAPH: <<parameters.supergraph>>
         SUBGRAPH: <<parameters.subgraph>>
       name: Check subgraph

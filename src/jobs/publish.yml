@@ -1,5 +1,8 @@
 description: >
-  Publish schema changes to a subgraph in one of your federated.
+  Publish schema changes to a subgraph of one of your federated supergraphs,
+  then upload the composed supergraph to S3 for the gateway to consume.
+  Skips the publish when the supergraph already serves this schema; the upload
+  still runs, so a re-run heals a gateway left stale by an earlier failure.
 
 executor: default
 
@@ -15,14 +18,9 @@ parameters:
     type: string
     default: "graphql/schema"
     description: "Directory containing graphql schema files"
-  skip_check_directory:
-    type: boolean
-    default: false
-    description: "Skip the Check directory changes step"
 steps:
   - checkout
   - publish:
       directory: << parameters.directory >>
       supergraph: << parameters.supergraph >>
       subgraph: << parameters.subgraph >>
-      skip_check_directory: << parameters.skip_check_directory >>

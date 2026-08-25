@@ -1,8 +1,20 @@
 #!/bin/bash
 # SUPERGRAPH, SUBGRAPH, ENVIRONMENT and DOMAIN_NAME are supplied by the step's
-# environment block and the consumer's CircleCI context.
+# environment block and the consumer's CircleCI context. FEDERATION_SKIP comes
+# from check_base_branch.sh and SCHEMA_UNCHANGED from
+# compare_published_schema.sh, both via BASH_ENV.
 # shellcheck disable=SC2153
 set -eo pipefail
+
+if [ -n "${FEDERATION_SKIP:-}" ]; then
+    echo "Skipping (${FEDERATION_SKIP})."
+    exit 0
+fi
+
+if [ "${SCHEMA_UNCHANGED:-}" = true ]; then
+    echo "Skipping: this schema is already published."
+    exit 0
+fi
 
 subgraph="${SUBGRAPH:-$CIRCLE_PROJECT_REPONAME}"
 supergraph="${SUPERGRAPH:0:27}@$ENVIRONMENT"

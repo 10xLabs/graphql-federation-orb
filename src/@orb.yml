@@ -1,8 +1,10 @@
 version: 2.1
 
 description: >
-  Publish schema changes to a subgraph in one of your federated.
-  If the graph exists in the graph registry but the variant does not, a new variant is created on publish.
+  Check and publish GraphQL subgraph schemas into a federated supergraph with Apollo Rover,
+  then upload the composed supergraph to S3 for the gateway to consume.
+  A subgraph is only republished when its schema actually changed, and if the graph exists in the
+  graph registry but the variant does not, a new variant is created on publish.
 
 display:
   home_url: "https://kolors.com.mx"

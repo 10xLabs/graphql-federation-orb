@@ -54,14 +54,9 @@ assert_not_contains() {
     fi
 }
 
-assert_halted() {
-    if [ -f "$STUB_STATE/halted" ]; then
-        pass "$1"
-    else
-        fail "$1" "expected 'circleci-agent step halt' to have been called"
-    fi
-}
-
+# No orb script halts any more: halting from inside a reusable command would
+# also kill the steps a consumer put after it in their own job. The
+# circleci-agent stub exists purely so this assertion can prove that.
 assert_not_halted() {
     if [ ! -f "$STUB_STATE/halted" ]; then
         pass "$1"
@@ -95,10 +90,20 @@ new_sandbox() {
     echo 0 >"$STUB_STATE/rover_exit"
     echo 0 >"$STUB_STATE/aws_exit"
     : >"$STUB_STATE/rover_stdout"
+    : >"$STUB_STATE/rover_stderr"
 
     # Environment the scripts read. Unset first so leakage cannot mask a bug.
     unset BASE_BRANCH DIRECTORY SUPERGRAPH SUBGRAPH ENVIRONMENT DOMAIN_NAME
-    unset DEVOPS_CONFIG_BUCKET GITHUB_PAT CIRCLE_PULL_REQUEST
+    unset DEVOPS_CONFIG_BUCKET GITHUB_PAT CIRCLE_PULL_REQUEST SCHEMA_HASH
+    unset FEDERATION_SKIP SCHEMA_UNCHANGED APOLLO_KEY
+    # Apollo key variables are named after the supergraph under test, so clear
+    # whatever a previous sandbox exported rather than an explicit list: a
+    # leaked key would make the "missing context variable" assertions pass
+    # against that value instead of against the script's guard.
+    local leaked
+    for leaked in $(compgen -A variable | grep '_APOLLO_KEY$'); do
+        unset "$leaked"
+    done
     export CIRCLE_SHA1="0123456789abcdef0123456789abcdef01234567"
     export CIRCLE_PROJECT_REPONAME="places-projector"
     export BASH_ENV="$SANDBOX/bash_env"
@@ -132,6 +137,7 @@ STUB
 #!/bin/bash
 printf '%s\n' "$*" >>"$STUB_STATE/rover_args"
 cat "$STUB_STATE/rover_stdout"
+cat "$STUB_STATE/rover_stderr" >&2
 exit "$(cat "$STUB_STATE/rover_exit")"
 STUB
 
@@ -139,6 +145,26 @@ STUB
 #!/bin/bash
 printf '%s\n' "$*" >>"$STUB_STATE/aws_args"
 exit "$(cat "$STUB_STATE/aws_exit")"
+STUB
+
+    # Unpacks a stand-in for the AWS installer payload into -d, or into the
+    # working directory when -d is absent, the way real unzip does.
+    cat >"$SANDBOX/bin/unzip" <<'STUB'
+#!/bin/bash
+printf '%s\n' "$*" >>"$STUB_STATE/unzip_args"
+dest="." prev=""
+for arg in "$@"; do
+    [ "$prev" = "-d" ] && dest="$arg"
+    prev="$arg"
+done
+mkdir -p "$dest/aws"
+printf '#!/bin/bash\nexit 0\n' >"$dest/aws/install"
+chmod +x "$dest/aws/install"
+STUB
+
+    cat >"$SANDBOX/bin/sudo" <<'STUB'
+#!/bin/bash
+printf '%s\n' "$*" >>"$STUB_STATE/sudo_args"
 STUB
 
     # Keeps retry loops instant.
@@ -151,26 +177,6 @@ STUB
 }
 
 # --- fixtures ---------------------------------------------------------------
-
-# init_repo builds a git repo with one commit so HEAD~1 resolves.
-init_repo() {
-    git init --quiet --initial-branch=main .
-    git config user.email test@example.com
-    git config user.name test
-    mkdir -p graphql/schema
-    echo "type Query { ping: String }" >graphql/schema/base.graphql
-    git add -A
-    git commit --quiet -m "initial"
-    echo "unrelated" >README.md
-    git add -A
-    git commit --quiet -m "second"
-}
-
-commit_schema_change() {
-    echo "type Query { ping: String, pong: String }" >graphql/schema/base.graphql
-    git add -A
-    git commit --quiet -m "schema change"
-}
 
 # github_pr_response points CIRCLE_PULL_REQUEST at a PR and makes the curl
 # stub answer with the given base ref.
@@ -186,10 +192,31 @@ github_pr_response() {
 run_script() {
     local script="$1"
     local out="$SANDBOX/stdout" err="$SANDBOX/stderr"
+    # Restore the caller's errexit rather than forcing it on. The test files run
+    # under `set -uo pipefail` deliberately: with errexit left on, the first
+    # failing assertion line kills the whole file, so every later assertion is
+    # silently skipped and nothing prints a FAIL.
+    local caller_flags="$-"
     set +e
     bash "$SCRIPTS_DIR/$script" >"$out" 2>"$err"
     STATUS=$?
-    set -e
+    case "$caller_flags" in
+    *e*) set -e ;;
+    *) set +e ;;
+    esac
     STDOUT="$(cat "$out")"
     STDERR="$(cat "$err")"
+}
+
+# bash_env_value reads back what a script exported into BASH_ENV, the way a
+# later CircleCI step would see it after sourcing the file.
+bash_env_value() {
+    local line
+    line="$(grep "^export $1=" "$BASH_ENV" | tail -1)"
+    [ -n "$line" ] || return 0
+    (
+        set +u
+        eval "$line"
+        printf '%s' "${!1}"
+    )
 }

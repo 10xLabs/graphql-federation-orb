@@ -22,9 +22,14 @@ if [ -z "$base_branch" ] || [ "$base_branch" = "null" ]; then
     exit 1
 fi
 
+# A flag rather than `circleci-agent step halt`: this runs inside a reusable
+# command, and halting would also kill whatever steps the consumer put after it
+# in their own job. Every later step in this command reads the flag and no-ops.
 # shellcheck disable=SC2153
 if [ "$base_branch" != "$BASE_BRANCH" ]; then
-    echo "PR targets ${base_branch}, not ${BASE_BRANCH}. Halting."
-    circleci-agent step halt
+    reason="PR targets ${base_branch}, not ${BASE_BRANCH}"
+    echo "${reason}. Skipping the rest of this command."
+    # Quoted, because CircleCI sources BASH_ENV and the reason contains spaces.
+    printf "export FEDERATION_SKIP='%s'\n" "$reason" >>"$BASH_ENV"
     exit 0
 fi

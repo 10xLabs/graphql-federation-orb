@@ -1,5 +1,7 @@
 description: >
-  Publish schema changes to a subgraph in one of your federated.
+  Check schema changes to a subgraph against one of your federated supergraphs.
+  Skips the check when the PR does not target base_branch, or when the supergraph
+  already serves this schema.
 
 executor: default
 
@@ -10,7 +12,7 @@ parameters:
     default: ""
   supergraph:
     type: string
-    description: "The name of the supergraph to publish to"
+    description: "The name of the supergraph to check against"
   subgraph:
     type: string
     default: ""
