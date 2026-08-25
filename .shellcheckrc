@@ -1,0 +1,8 @@
+# Follow `source` directives, so plain `shellcheck` behaves like `shellcheck -x`
+# whether it is run by hand or by the circleci/shellcheck orb, which passes no
+# flags and fails on SC1091.
+external-sources=true
+
+# Resolve those directives against the sourcing script's own directory, so the
+# result does not depend on the directory shellcheck was invoked from.
+source-path=SCRIPTDIR

@@ -12,7 +12,7 @@ CircleCI orb published as **`nexbus/graphql-federation`** (repo name has the `-o
 circleci orb pack src/ > orb.yml            # pack unpacked source into the single orb.yml that ships
 circleci orb pack src/ | circleci orb validate -   # validate the packed orb
 circleci config validate .circleci/config.yml
-shellcheck src/scripts/*.sh                 # CI runs circleci/shellcheck orb
+shellcheck src/scripts/*.sh tests/*.sh      # CI runs circleci/shellcheck orb over both trees
 yamllint .                                  # config in .yamllint (relaxed, 200 col)
 circleci orb info nexbus/graphql-federation | grep Latest
 ```
@@ -22,6 +22,8 @@ bash tests/run.sh                           # script test suite (no deps beyond 
 ```
 
 Verification is: `tests/run.sh` + shellcheck + yamllint + `orb-tools/review`, plus `install-tests`, `orb-render-check` and `orb-command-smoke` in `.circleci/test-deploy.yml`. `orb-command-smoke` is the only job that runs the *packed* orb — it sets `FEDERATION_SKIP` so every step no-ops, which keeps it hermetic while still proving the inlined scripts parse and run.
+
+CI's `shellcheck/check` job passes no flags and fails on SC1091, so `.shellcheckrc` sets `external-sources=true` and `source-path=SCRIPTDIR`. Run `shellcheck` with no flags to reproduce CI exactly — `-x` on the command line hides the difference.
 
 `tests/` runs `src/scripts/*.sh` directly — the same bytes that get inlined at pack time — with `curl`, `rover`, `aws`, `circleci-agent` and `sleep` replaced by recording stubs on `PATH` (`tests/helpers.bash`). It runs on macOS and Linux, so keep the scripts portable: no GNU-only `sed -r`/`\U`, and pick between `sha256sum` and `shasum -a 256`.
 
