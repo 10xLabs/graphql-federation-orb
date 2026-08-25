@@ -1,5 +1,9 @@
 description: >
-  Publish schema changes to a subgraph in one of your federated.
+  Publish schema changes to a subgraph of one of your federated supergraphs, then
+  upload the composed supergraph to S3. Skips the check and publish steps when the
+  supergraph already serves this schema; the upload still runs, so a re-run heals a
+  gateway left stale by an earlier failure. Skipping is scoped to this command: it
+  never halts the job, so your own steps around it still run.
 parameters:
   supergraph:
     type: string
@@ -12,22 +16,10 @@ parameters:
     type: string
     default: "graphql/schema"
     description: "Directory containing graphql schema files"
-  skip_check_directory:
-    type: boolean
-    default: false
-    description: "Skip the Check directory changes step"
 steps:
-  - when:
-      condition: <<not parameters.skip_check_directory>>
-      steps:
-        - run:
-            environment:
-              DIRECTORY: <<parameters.directory>>
-            name: Check directory changes
-            command: <<include(scripts/check_directory_changes.sh)>>
   - run:
-      name: Install AWS CLI
-      command: <<include(scripts/install_aws_cli.sh)>>
+      name: Reset federation state
+      command: <<include(scripts/reset_state.sh)>>
   - run:
       name: Install Rover CLI
       command: <<include(scripts/install_rover_cli.sh)>>
@@ -39,17 +31,29 @@ steps:
   - run:
       environment:
         DIRECTORY: <<parameters.directory>>
+      name: Build subgraph schema
+      command: <<include(scripts/build_schema.sh)>>
+  - run:
+      environment:
+        SUPERGRAPH: <<parameters.supergraph>>
+        SUBGRAPH: <<parameters.subgraph>>
+      name: Compare published subgraph
+      command: <<include(scripts/compare_published_schema.sh)>>
+  - run:
+      environment:
         SUPERGRAPH: <<parameters.supergraph>>
         SUBGRAPH: <<parameters.subgraph>>
       name: Check subgraph
       command: <<include(scripts/check_subgraph.sh)>>
   - run:
       environment:
-        DIRECTORY: <<parameters.directory>>
         SUPERGRAPH: <<parameters.supergraph>>
         SUBGRAPH: <<parameters.subgraph>>
       name: Publish subgraph
       command: <<include(scripts/publish_subgraph.sh)>>
+  - run:
+      name: Install AWS CLI
+      command: <<include(scripts/install_aws_cli.sh)>>
   - run:
       environment:
         SUPERGRAPH: <<parameters.supergraph>>

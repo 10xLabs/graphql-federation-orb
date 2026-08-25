@@ -1,5 +1,6 @@
 description: >
-  Publish schema changes to a subgraph in one of your federated.
+  Publish a subgraph schema to a federated supergraph and upload the composed
+  supergraph to S3. Nothing is republished when the schema has not changed.
 
 usage:
   version: 2.1

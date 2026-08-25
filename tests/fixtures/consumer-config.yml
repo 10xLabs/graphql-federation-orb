@@ -1,0 +1,24 @@
+version: 2.1
+
+# Stands in for a consumer repo's .circleci/config.yml. ORB_VERSION is replaced
+# with the dev version under test before `circleci config process` runs, so this
+# fails if a parameter is renamed or removed without the orb being versioned.
+orbs:
+  graphql-federation: nexbus/graphql-federation@ORB_VERSION
+
+workflows:
+  federation:
+    jobs:
+      - graphql-federation/check:
+          base_branch: master
+          supergraph: nexbus-router
+          subgraph: places-projector
+          directory: internal/api/admin/graphql/schema
+      - graphql-federation/publish:
+          supergraph: nexbus-router
+          subgraph: places-projector
+          directory: internal/api/admin/graphql/schema
+      # Both jobs must also render on their defaults alone.
+      - graphql-federation/publish:
+          name: publish-defaults
+          supergraph: nexbus-router

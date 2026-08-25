@@ -1,0 +1,14 @@
+version: 2.1
+
+# A consumer config still passing skip_check_directory, removed in 3.0.0.
+# `circleci config process` must reject this — that rejection is the signal
+# consumers need to update their config, so it is asserted, not tolerated.
+orbs:
+  graphql-federation: nexbus/graphql-federation@ORB_VERSION
+
+workflows:
+  federation:
+    jobs:
+      - graphql-federation/publish:
+          supergraph: nexbus-router
+          skip_check_directory: true
