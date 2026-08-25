@@ -65,7 +65,7 @@ The `check` job is steps 1–5, plus an upfront guard for the PR base branch.
 
 No script calls `circleci-agent step halt`. Both skip paths write a variable to `$BASH_ENV` and every later step in the command reads it and no-ops:
 
-- `FEDERATION_SKIP=<reason>` — set by `check_base_branch.sh` when the PR does not target `base_branch`. Everything after it, installs included, is a no-op.
+- `FEDERATION_SKIP=<reason>` — set by `check_base_branch.sh` when the PR does not target `base_branch`. Everything after it, installs included, is a no-op. `check_base_branch.sh` honours it too, so a job that sets it externally no-ops the whole command — that is what makes `orb-command-smoke` hermetic.
 - `SCHEMA_UNCHANGED=true` — set by `compare_published_schema.sh`. Skips **only** steps 5 and 6.
 
 Two reasons, both load-bearing. A halt terminates the whole job, and the commands are documented as usable inside a consumer's own job, so a skip would silently drop their tests and artifacts. And step 8 must still run on the unchanged path: the hash is compared against *Apollo*, never against S3, so a run that published its subgraph and then died before the upload would otherwise match the hash on every later run, go green, and leave the gateway on the pre-publish supergraph forever. On that path `fetch_supergraph.sh` skips the `CIRCLE_SHA1` wait — nothing new is being composed — and uploads what Apollo currently serves.

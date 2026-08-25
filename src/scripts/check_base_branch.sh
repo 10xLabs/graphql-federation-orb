@@ -1,6 +1,15 @@
 #!/bin/bash
 set -eo pipefail
 
+# This step is the one that normally *sets* FEDERATION_SKIP, so it only sees the
+# variable when something outside the orb set it — a job that wants the whole
+# command to no-op. Honour it here too, or this step still reaches for the
+# GitHub API and fails on a PR build with no GITHUB_PAT.
+if [ -n "${FEDERATION_SKIP:-}" ]; then
+    echo "Skipping (${FEDERATION_SKIP})."
+    exit 0
+fi
+
 # Nothing to gate on a non-PR build, or when no base branch was configured.
 if [ -z "$CIRCLE_PULL_REQUEST" ] || [ -z "$BASE_BRANCH" ]; then
     exit 0

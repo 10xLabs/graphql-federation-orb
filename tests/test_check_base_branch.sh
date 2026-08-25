@@ -50,6 +50,17 @@ run_script check_base_branch.sh
 assert_eq "" "$(bash_env_value FEDERATION_SKIP)" "base branch matches: exports no skip flag"
 cleanup_sandbox
 
+# --- skipped from outside the orb -------------------------------------------
+
+new_sandbox
+github_pr_response "develop"
+export BASE_BRANCH="master"
+export FEDERATION_SKIP="orb-command-smoke"
+run_script check_base_branch.sh
+assert_eq 0 "$STATUS" "FEDERATION_SKIP set: exits 0"
+assert_eq "" "$(cat "$STUB_STATE/curl_args" 2>/dev/null)" "FEDERATION_SKIP set: never queries GitHub"
+cleanup_sandbox
+
 # --- failures must be loud, never a silent halt -----------------------------
 
 new_sandbox
