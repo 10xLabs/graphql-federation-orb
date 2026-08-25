@@ -80,8 +80,8 @@ architecture and [CHANGELOG.md](CHANGELOG.md) for what changed.
 Publishing is tag-driven. Merge to `master`, then create a [GitHub
 Release](https://github.com/10xLabs/graphql-federation-orb/releases/new) with a
 semver tag `vX.Y.Z` — only that tag pattern matches the production publish
-filter. `circleci orb info nexbus/graphql-federation | grep Latest` shows the
-current version.
+filter. `circleci orb list nexbus | grep graphql-federation` shows the current
+version.
 
 ## Contributing
 

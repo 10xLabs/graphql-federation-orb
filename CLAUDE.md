@@ -14,7 +14,7 @@ circleci orb pack src/ | circleci orb validate -   # validate the packed orb
 circleci config validate .circleci/config.yml
 shellcheck src/scripts/*.sh tests/*.sh      # CI runs circleci/shellcheck orb over both trees
 yamllint .                                  # config in .yamllint (relaxed, 200 col)
-circleci orb info nexbus/graphql-federation | grep Latest
+circleci orb list nexbus | grep graphql-federation   # latest published version
 ```
 
 ```bash
