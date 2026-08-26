@@ -13,7 +13,7 @@ supergraph to S3 for the gateway to consume.
 version: 2.1
 
 orbs:
-  graphql-federation: nexbus/graphql-federation@3.0.0
+  graphql-federation: nexbus/graphql-federation@2.4.0
 
 workflows:
   federation:

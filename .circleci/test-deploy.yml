@@ -51,7 +51,7 @@ jobs:
       - run:
           # Order, not just presence. Greping each name independently would pass
           # on a config whose steps had been reversed, and step order is exactly
-          # what changed in 3.0.0 — the change check has to run before the
+          # what changed in 2.4.0 — the change check has to run before the
           # publish, and the AWS CLI install after it.
           name: The processed config runs the check and publish steps in order
           command: |
@@ -81,7 +81,7 @@ jobs:
             sed 's|ORB_VERSION|dev:<< pipeline.git.revision >>|' \
               tests/fixtures/consumer-config-legacy.yml >/tmp/legacy.yml
             if circleci config process /tmp/legacy.yml >/tmp/legacy-output.txt 2>&1; then
-              echo "skip_check_directory still compiles; it was supposed to be removed in 3.0.0" >&2
+              echo "skip_check_directory still compiles; it was supposed to be removed in 2.4.0" >&2
               exit 1
             fi
             cat /tmp/legacy-output.txt

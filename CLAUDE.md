@@ -99,7 +99,7 @@ Because the hash is computed before the marker is appended, it depends on schema
 - `awk 1` instead of `cat` — guarantees a trailing newline per file. Plain `cat` glues a file that lacks one onto the next file's first line, and when the join lands inside a `#` comment or a `"""` description the following type disappears with no error.
 - The hash is taken before the marker is appended.
 
-This replaced a git-diff check (removed in 3.0.0). The comparison is against *Apollo*, not against git, which makes it idempotent — re-runs and manual triggers behave identically — and self-healing: if a publish failed or someone ran `rover` by hand, git would say "no change" while the gateway stayed stale, whereas the hash comparison notices and republishes. The unconditional S3 upload described above covers the one drift the hash comparison cannot see, since S3 is not what the hash is compared against.
+This replaced a git-diff check (removed in 2.4.0). The comparison is against *Apollo*, not against git, which makes it idempotent — re-runs and manual triggers behave identically — and self-healing: if a publish failed or someone ran `rover` by hand, git would say "no change" while the gateway stayed stale, whereas the hash comparison notices and republishes. The unconditional S3 upload described above covers the one drift the hash comparison cannot see, since S3 is not what the hash is compared against.
 
 Known gap: a change that alters only the routing URL (i.e. `DOMAIN_NAME`) does not republish, because the hash covers schema content only. Folding the routing URL in is not viable — the `check` command has no `DOMAIN_NAME`, so its hash would permanently disagree with `publish`'s.
 
@@ -111,7 +111,7 @@ Known gap: a change that alters only the routing URL (i.e. `DOMAIN_NAME`) does n
 
 ### Env vars supplied by the consuming project's CircleCI context
 
-`ENVIRONMENT`, `DOMAIN_NAME`, `DEVOPS_CONFIG_BUCKET`, `<SUPERGRAPH>_APOLLO_KEY`, plus AWS credentials for the S3 upload. `GITHUB_PAT` is needed only by the `check` job, for the `base_branch` guard — `publish` stopped using it in 3.0.0. These are *not* orb parameters — adding a new one is a breaking change for consumers.
+`ENVIRONMENT`, `DOMAIN_NAME`, `DEVOPS_CONFIG_BUCKET`, `<SUPERGRAPH>_APOLLO_KEY`, plus AWS credentials for the S3 upload. `GITHUB_PAT` is needed only by the `check` job, for the `base_branch` guard — `publish` stopped using it in 2.4.0. These are *not* orb parameters — adding a new one is a breaking change for consumers.
 
 `GRAPHQL_FEDERATION_DISABLED` is an optional job-level opt-out, read but never written by the orb.
 

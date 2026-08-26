@@ -6,15 +6,21 @@ All notable changes to this orb are documented here. The format follows
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-08-26
+
+Shipped as a minor despite removing a parameter: `skip_check_directory` had no
+known users, so no consumer config is expected to break. Upgrading is still not
+a no-op — read the two notes below before you bump.
+
 ### Removed
 
-- **BREAKING** — the `skip_check_directory` parameter is gone from the `publish`
-  job and command. Consumer configs still passing it fail to compile. Remove it
-  before upgrading; there is no replacement, because the new change detection has
+- **Action required** — the `skip_check_directory` parameter is gone from the
+  `publish` job and command. A consumer config still passing it fails to compile
+  with `Unexpected argument(s): skip_check_directory`. Remove it before
+  upgrading; there is no replacement, because the new change detection has
   nothing to skip.
-- **BREAKING** — the git-diff change check (`check_directory_changes.sh`).
-  `publish` no longer reads `GITHUB_PAT`; the `check` job still needs it for the
-  `base_branch` guard.
+- The git-diff change check (`check_directory_changes.sh`). `publish` no longer
+  reads `GITHUB_PAT`; the `check` job still needs it for the `base_branch` guard.
 
 ### Added
 
@@ -72,7 +78,7 @@ All notable changes to this orb are documented here. The format follows
   second subgraph unpublished.
 - `GRAPHQL_FEDERATION_DISABLED` — set it in a job's environment to no-op every
   step of the command. Read by the orb, never written by it.
-- **BREAKING for direct command users** — neither command calls
+- **Action required for direct command users** — neither command calls
   `circleci-agent step halt` any more. Skipping is carried between the orb's own
   steps through `$BASH_ENV` (`FEDERATION_SKIP`, `SCHEMA_UNCHANGED`), so a
   consumer running `check`/`publish` inside their own job keeps the steps they

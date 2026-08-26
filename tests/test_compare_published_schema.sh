@@ -7,7 +7,7 @@ HASH="a3f9c1e2000000000000000000000000000000000000000000000000000000ff"
 OTHER_HASH="bbbbbbbb000000000000000000000000000000000000000000000000000000ff"
 
 # published_subgraph writes what the rover stub will hand back for a fetch.
-# $1 is the schemaHash line's value, or "none" for a pre-3.0.0 marker.
+# $1 is the schemaHash line's value, or "none" for a pre-2.4.0 marker.
 published_subgraph() {
     if [ "$1" = "none" ]; then
         printf 'type Query { ping: String }\ninput SHAPlacesProjectorInput {\n    value: String = "deadbeef"\n}\n' \
@@ -56,8 +56,8 @@ export ENVIRONMENT="stag"
 export SCHEMA_HASH="$HASH"
 published_subgraph none
 run_script compare_published_schema.sh
-assert_eq 0 "$STATUS" "pre-3.0.0 marker with no schemaHash: exits 0"
-assert_not_halted "pre-3.0.0 marker with no schemaHash: does not halt"
+assert_eq 0 "$STATUS" "pre-2.4.0 marker with no schemaHash: exits 0"
+assert_not_halted "pre-2.4.0 marker with no schemaHash: does not halt"
 cleanup_sandbox
 
 # A subgraph or variant that does not exist yet is the first-publish case.
